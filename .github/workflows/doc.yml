@@ -41,7 +41,7 @@ jobs:
           python -m pip install uv
           python -m uv venv
           python -m uv pip install -e ".[d]"
-          python -m uv pip install -r "docs/requirements.txt"
+          python -m uv pip install --group docs
 
       - name: Build documentation
         run: sphinx-build -a -b html -W --keep-going docs/ docs/_build

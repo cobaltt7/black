@@ -13,7 +13,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2025, windows-11-arm, ubuntu-22.04, ubuntu-22.04-arm, macos-latest]
+        os:
+          - windows-latest
+          - windows-11-arm
+          - ubuntu-latest
+          - ubuntu-22.04-arm
+          - macos-latest
         include:
           - os: windows-2025
             pathsep: ";"
@@ -48,9 +53,9 @@ jobs:
 
       - name: Install Black and PyInstaller
         run: |
-          python -m pip install --upgrade pip wheel
+          python -m pip install --upgrade pip
           python -m pip install .[colorama]
-          python -m pip install pyinstaller
+          python -m pip install --group binary
 
       - name: Build executable with PyInstaller
         run: >

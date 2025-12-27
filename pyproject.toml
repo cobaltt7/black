@@ -25,10 +25,6 @@ unstable = true
 # Build system information and other project-specific configuration below.
 # NOTE: You don't need this in your own Black configuration.
 
-[build-system]
-requires = ["hatchling>=1.27.0", "hatch-vcs", "hatch-fancy-pypi-readme"]
-build-backend = "hatchling.build"
-
 [project]
 name = "black"
 description = "The uncompromising code formatter."
@@ -69,8 +65,8 @@ dependencies = [
   "pathspec>=0.9.0",
   "platformdirs>=2",
   "pytokens>=0.3.0",
-  "tomli>=1.1.0; python_version < '3.11'",
-  "typing_extensions>=4.0.1; python_version < '3.11'",
+  "tomli>=1.1.0; python_version<'3.11'",
+  "typing_extensions>=4.0.1; python_version<'3.11'",
 ]
 dynamic = ["readme", "version"]
 
@@ -78,10 +74,71 @@ dynamic = ["readme", "version"]
 colorama = ["colorama>=0.4.3"]
 uvloop = ["uvloop>=0.15.2"]
 d = ["aiohttp>=3.10"]
-jupyter = [
-  "ipython>=7.8.0",
-  "tokenize-rt>=3.2.0",
+jupyter = ["ipython>=7.8.0", "tokenize-rt>=3.2.0"]
+
+[dependency-groups]
+binary = ["pyinstaller", "wheel>=0.45.1"]
+build = ["hatch==1.16.0"]
+hatch-mypyc = ["click>=8.1.7", "hatch-mypyc>=0.16.0", "mypy==1.19.0"]
+
+docs = [
+  "docutils==0.21.2",
+  "furo==2025.9.25",
+  "myst-parser==4.0.1",
+  "sphinx_copybutton==0.5.2",
+  "sphinx==8.2.3",
+  "sphinxcontrib-programoutput==0.18",
 ]
+tests = [
+  { include-group = "coverage" },
+  { include-group = "pytest" },
+  { include-group = "tox" },
+  "pre-commit",
+  "pytest-cov>=4.1.0",
+  "pytest-xdist>=3.0.2",
+]
+mypy = [
+  # Click is intentionally out-of-sync with above
+  # v8.2 has breaking changes. We work around them at runtime, but we need the newer stubs.
+  "click>=8.2.0",
+  "packaging>=22.0",
+  "platformdirs>=2",
+  "pytokens>=0.3.0",
+  "tomli>=1.1.0,<2.0.0",
+
+  # blackd
+  "aiohttp>=3.10",
+
+  # tests
+  { include-group = "pytest" },
+
+  # fuzz
+  { include-group = "fuzz" },
+  "types-atheris",
+
+  # diff-shades
+  "urllib3",
+
+  # version-check
+  "beautifulsoup4==4.9.3",
+  "types-commonmark",
+  "types-pyyaml",
+
+]
+flake8 = ["flake8-bugbear==24.2.6", "flake8-comprehensions", "flake8-simplify"]
+
+coverage = ["coverage>=5.3"]
+pytest = ["pytest>=7"]
+tox = ["tox>=4.22"]
+
+fuzz = ["hypothesis", "hypothesmith"]
+diff-shades = [
+  "diff-shades @ https://github.com/ichard26/diff-shades/archive/stable.zip",
+]
+diff-shades-comment = ["click>=8.1.7", "packaging>=22.0", "urllib3"]
+
+version-check = ["beautifulsoup4==4.9.3", "commonmark==0.9.1", "pyyaml==6.0.1"]
+width-table = ["wcwidth>=0.2.6"]
 
 [project.scripts]
 black = "black:patched_main"
@@ -95,6 +152,10 @@ Documentation = "https://black.readthedocs.io/"
 Changelog = "https://github.com/psf/black/blob/main/CHANGES.md"
 Repository = "https://github.com/psf/black"
 Issues = "https://github.com/psf/black/issues"
+
+[build-system]
+requires = ["hatch-fancy-pypi-readme", "hatch-vcs", "hatchling>=1.27.0"]
+build-backend = "hatchling.build"
 
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
 content-type = "text/markdown"
@@ -123,11 +184,7 @@ macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
-dependencies = [
-  "hatch-mypyc>=0.16.0",
-  "mypy==1.19.0",
-  "click>=8.1.7",
-]
+dependency-groups = ["hatch-mypyc"]
 require-runtime-dependencies = true
 exclude = [
   # There's no good reason for blackd to be compiled.
@@ -163,10 +220,10 @@ skip = [
     "cp31?t-*",  # mypyc doesn't have great support for free threaded builds
 ]
 
-# This is the bare minimum needed to run the test suite. Pulling in the full
-# test_requirements.txt would download a bunch of other packages not necessary
-# here and would slow down the testing step a fair bit.
-test-requires = ["pytest>=7"]
+# This is the bare minimum needed to run the test suite. Pulling in the full test
+# requirements would download a bunch of other packages not necessary here and would
+# slow down the testing step a fair bit.
+test-groups = ["pytest"]
 test-command = 'pytest {project} -k "not incompatible_with_mypyc"'
 test-extras = ["d"," jupyter"]
 # Skip trying to test arm64 builds on Intel Macs. (so cross-compilation doesn't
