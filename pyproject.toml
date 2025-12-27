@@ -131,7 +131,7 @@ coverage = ["coverage>=5.3"]
 pytest = ["pytest>=7"]
 tox = ["tox>=4.22"]
 
-fuzz = ["hypothesis", "hypothesmith"]
+fuzz = [{ include-group = "coverage" }, "hypothesis", "hypothesmith"]
 diff-shades = [
   "diff-shades @ https://github.com/ichard26/diff-shades/archive/stable.zip",
 ]
