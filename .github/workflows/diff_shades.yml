@@ -44,15 +44,13 @@ jobs:
           python-version: "3.13"
 
       - name: Install diff-shades and support dependencies
-        run: |
-          python -m pip install 'click>=8.1.7' packaging urllib3
-          python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
+        run: python -m pip install --group diff-shades diff-shades-comment
 
       - name: Calculate run configuration & metadata
         id: set-config
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: python scripts/diff_shades_gha_helper.py config ${{ github.event_name }}
+        run: python scripts/diff_shades_gha_helper.py config
 
   analysis-base:
     name: analysis / base / ${{ matrix.mode }}
@@ -77,7 +75,7 @@ jobs:
 
       - name: Install diff-shades
         run: |
-          python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
+          python -m pip install --group diff-shades
           git config user.name "diff-shades-gha"
           git config user.email "diff-shades-gha@example.com"
 
@@ -92,15 +90,15 @@ jobs:
         if: steps.baseline-cache.outputs.cache-hit != 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: >
+        run: |
           ${{ matrix.baseline-setup-cmd }}
-          && python -m pip install .
+          python -m pip install .
 
       - name: Analyze baseline revision
         if: steps.baseline-cache.outputs.cache-hit != 'true'
-        run: >
-          diff-shades analyze ${{ matrix.baseline-analysis }}
-          -v --work-dir projects-cache/ ${{ matrix.force-flag }}
+        run:
+          diff-shades analyze ${{ matrix.baseline-analysis }} --work-dir projects-cache/
+          --force-${{ matrix.style }}-style -v
 
       - name: Upload baseline analysis
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
@@ -131,16 +129,16 @@ jobs:
 
       - name: Install diff-shades
         run: |
-          python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
+          python -m pip install --group diff-shades
           git config user.name "diff-shades-gha"
           git config user.email "diff-shades-gha@example.com"
 
       - name: Build and install target revision
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: >
+        run: |
           ${{ matrix.target-setup-cmd }}
-          && python -m pip install .
+          python -m pip install .
 
       # Pull it from previous runs - we're NOT trying to get it from this run
       # (but it wouldn't cause problems if we theoretically did)
@@ -153,16 +151,17 @@ jobs:
 
       - name: Analyze target revision (with repeated projects)
         if: steps.baseline-cache.outputs.cache-hit == 'true'
-        run: >
-          diff-shades analyze ${{ matrix.target-analysis }}
-          -v --work-dir projects-cache/ ${{ matrix.force-flag }}
+        # prettier-ignore
+        run:
+          diff-shades analyze ${{ matrix.target-analysis }} --work-dir projects-cache/
+          --force-${{ matrix.style }}-style -v
           --repeat-projects-from ${{ matrix.baseline-analysis }}
 
       - name: Analyze target revision (without repeated projects)
         if: steps.baseline-cache.outputs.cache-hit != 'true'
-        run: >
-          diff-shades analyze ${{ matrix.target-analysis }}
-          -v --work-dir projects-cache/ ${{ matrix.force-flag }}
+        run:
+          diff-shades analyze ${{ matrix.target-analysis }} --work-dir projects-cache/
+          --force-${{ matrix.style }}-style -v
 
       - name: Upload target analysis
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
@@ -171,8 +170,7 @@ jobs:
           path: ${{ matrix.target-analysis }}
 
       - name: Check for failed files for target revision
-        run: >
-          diff-shades show-failed --check --show-log ${{ matrix.target-analysis }}
+        run: diff-shades show-failed --check --show-log ${{ matrix.target-analysis }}
 
   compare:
     name: compare / ${{ matrix.mode }}
@@ -198,39 +196,91 @@ jobs:
           python-version: "3.13"
 
       - name: Install diff-shades and support dependencies
-        run: |
-          python -m pip install 'click>=8.1.7' packaging urllib3
-          python -m pip install https://github.com/ichard26/diff-shades/archive/stable.zip
+        run: python -m pip install --group diff-shades diff-shades-comment
 
       - name: Generate HTML diff report
-        run: >
-          diff-shades --dump-html diff.html compare --diff
-          ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
+        # prettier-ignore
+        run:
+          diff-shades --dump-html diff.html
+          compare --diff ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
 
       - name: Upload diff report
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
-          name: ${{ matrix.mode }}-diff.html
+          name: ${{ matrix.style }}-diff.html
           path: diff.html
 
       - name: Generate summary file (PR only)
-        if: github.event_name == 'pull_request' && matrix.mode == 'preview-new-changes'
-        run: >
+        if: github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        # prettier-ignore
+        run:
           python scripts/diff_shades_gha_helper.py comment-body
           ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
-          ${{ matrix.baseline-sha }} ${{ matrix.target-sha }}
-          ${{ github.event.pull_request.number }}
+          ${{ matrix.style }} ${{ matrix.mode }}
 
       - name: Upload summary file (PR only)
-        if: github.event_name == 'pull_request' && matrix.mode == 'preview-new-changes'
+        if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
-          name: .pr-comment.json
-          path: .pr-comment.json
+          name: .${{ matrix.style }}.pr-comment.md
+          path: .pr-comment.md
           include-hidden-files: true
 
       - name: Verify zero changes (PR only)
         if: matrix.mode == 'assert-no-changes'
+        # prettier-ignore
         run: >
-          diff-shades compare --check ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
-          || (echo "Please verify you didn't change the stable code style unintentionally!" && exit 1)
+          diff-shades compare --check
+          ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }} ||
+          (echo "Please verify you didn't change the stable code style unintentionally!"
+          && exit 1)
+
+  comment:
+    name: comment
+    needs: ["configure", "compare"]
+    if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          merge-multiple: true
+
+      - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        with:
+          python-version: "3.13"
+
+      - name: Install support dependencies
+        run: python -m pip install --group diff-shades-comment
+
+      - name: Get details from initial workflow run
+        id: metadata
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        # prettier-ignore
+        run:
+          python scripts/diff_shades_gha_helper.py comment-details
+          ${{ join(fromJson(needs.configure.outputs.matrix).*.style, ' ') }}
+
+      - name: Try to find pre-existing PR comment
+        id: find-comment
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "diff-shades"
+
+      - name: Create or update PR comment
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ steps.metadata.outputs.comment-body }}
+          edit-mode: replace
