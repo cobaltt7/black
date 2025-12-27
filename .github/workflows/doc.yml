@@ -2,10 +2,10 @@ name: Documentation
 
 on:
   push:
-    paths: ["docs/**", "pyproject.toml", ".github/workflows/*"]
+    paths: ["docs/**", "pyproject.toml", ".github/workflows/doc.yml"]
 
   pull_request:
-    paths: ["docs/**", "pyproject.toml", ".github/workflows/*"]
+    paths: ["docs/**", "pyproject.toml", ".github/workflows/doc.yml"]
 
 permissions:
   contents: read
