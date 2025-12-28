@@ -14,7 +14,7 @@ jobs:
   main:
     name: sdist + pure wheel
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
+    # if: github.event_name == 'release'
     environment:
       name: release
       url: https://pypi.org/p/black
@@ -140,8 +140,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: true # needed for `git push` below
 
-      - if: github.event_name == 'release'
-        name: Update stable branch to release tag & push
+      - name: Update stable branch to release tag & push
         run: |
           git reset --hard "${TAG_NAME}"
           git push
