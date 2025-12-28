@@ -13,7 +13,7 @@ RUN python -m venv $VIRTUAL_ENV
 
 RUN . /opt/venv/bin/activate \
     && pip install --no-cache-dir --upgrade pip \
-    && python -m pip install --no-cache-dir --group build
+    && python -m pip install --no-cache-dir --group build \
     && hatch build -t wheel \
     && pip install --no-cache-dir dist/*-cp* \
     && pip install black[colorama,d,uvloop]
