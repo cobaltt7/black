@@ -202,7 +202,7 @@ def comment_details(styles: tuple[str, ...]) -> None:
         f" ({base['sha']}):"
     ]
     for style in styles:
-        with open(f".{style} {COMMENT_FILE}", "r", encoding="utf-8") as f:
+        with open(f".{style}{COMMENT_FILE}", "r", encoding="utf-8") as f:
             content = f.read()
             lines.append(content)
 
