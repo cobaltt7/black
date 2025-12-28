@@ -116,7 +116,7 @@ jobs:
         with:
           python-version: "3.13"
           pip-version: "25.3"
-          pip-install: -e ".[uvloop]"
+          pip-install: -e .[uvloop]
 
       - name: Format ourselves
         run: python -m black --check .

@@ -18,7 +18,7 @@ current development version. To confirm this, you have three options:
    - clone this repository;
    - run `pip install -e .[d]`;
    - run `pip install --group tests`
-   - make sure it's sane by running `python -m pytest`; and
+   - make sure it's sane by running `python -m pytest -n auto`; and
    - run `black` like you did last time.
 -->
 

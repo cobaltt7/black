@@ -77,10 +77,17 @@ d = ["aiohttp>=3.10"]
 jupyter = ["ipython>=7.8.0", "tokenize-rt>=3.2.0"]
 
 [dependency-groups]
-binary = ["pyinstaller", "wheel>=0.45.1"]
 build = ["hatch==1.16.0"]
 hatch-mypyc = ["click>=8.1.7", "hatch-mypyc>=0.16.0", "mypy==1.19.0"]
+wheels = ["cibuildwheel==3.3.0", "pypyp==1.3.0"]
+binary = ["pyinstaller", "wheel>=0.45.1"]
 
+dev = [{ include-group = "cov-tests" }, { include-group = "tox" }, "pre-commit"]
+cov-tests = [
+  { include-group = "coverage" },
+  { include-group = "pytest" },
+  "pytest-cov>=4.1.0",
+]
 docs = [
   "docutils==0.21.2",
   "furo==2025.9.25",
@@ -89,47 +96,10 @@ docs = [
   "sphinx==8.2.3",
   "sphinxcontrib-programoutput==0.18",
 ]
-tests = [
-  { include-group = "coverage" },
-  { include-group = "pytest" },
-  { include-group = "tox" },
-  "pre-commit",
-  "pytest-cov>=4.1.0",
-  "pytest-xdist>=3.0.2",
-]
-mypy = [
-  # Click is intentionally out-of-sync with above
-  # v8.2 has breaking changes. We work around them at runtime, but we need the newer stubs.
-  "click>=8.2.0",
-  "packaging>=22.0",
-  "platformdirs>=2",
-  "pytokens>=0.3.0",
-  "tomli>=1.1.0,<2.0.0",
 
-  # blackd
-  "aiohttp>=3.10",
-
-  # tests
-  { include-group = "pytest" },
-
-  # fuzz
-  { include-group = "fuzz" },
-  "types-atheris",
-
-  # diff-shades
-  "urllib3",
-
-  # version-check
-  "beautifulsoup4==4.9.3",
-  "types-commonmark",
-  "types-pyyaml",
-
-]
-flake8 = ["flake8-bugbear==24.2.6", "flake8-comprehensions", "flake8-simplify"]
-
-coverage = ["coverage>=5.3"]
-pytest = ["pytest>=7"]
 tox = ["tox>=4.22"]
+tests = ["pytest>=7", "pytest-xdist>=3.0.2",]
+coverage = ["coverage>=5.3"]
 
 fuzz = [{ include-group = "coverage" }, "hypothesis", "hypothesmith"]
 diff-shades = [
@@ -137,7 +107,6 @@ diff-shades = [
 ]
 diff-shades-comment = ["click>=8.1.7", "packaging>=22.0", "urllib3"]
 
-version-check = ["beautifulsoup4==4.9.3", "commonmark==0.9.1", "pyyaml==6.0.1"]
 width-table = ["wcwidth>=0.2.6"]
 
 [project.scripts]
@@ -184,7 +153,7 @@ macos-max-compat = true
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
-dependency-groups = ["hatch-mypyc"]
+dependencies = ["--group=hatch-mypyc"]
 require-runtime-dependencies = true
 exclude = [
   # There's no good reason for blackd to be compiled.
@@ -220,11 +189,8 @@ skip = [
     "cp31?t-*",  # mypyc doesn't have great support for free threaded builds
 ]
 
-# This is the bare minimum needed to run the test suite. Pulling in the full test
-# requirements would download a bunch of other packages not necessary here and would
-# slow down the testing step a fair bit.
-test-groups = ["pytest"]
-test-command = 'pytest {project} -k "not incompatible_with_mypyc"'
+test-groups = ["tests"]
+test-command = 'pytest {project} -k "not incompatible_with_mypyc" -n auto'
 test-extras = ["d"," jupyter"]
 # Skip trying to test arm64 builds on Intel Macs. (so cross-compilation doesn't
 # straight up crash)
@@ -234,20 +200,11 @@ test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
 HATCH_BUILD_HOOKS_ENABLE = "1"
 MYPYC_OPT_LEVEL = "3"
 MYPYC_DEBUG_LEVEL = "0"
+CC = "clang"
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
-before-build = [
-    "yum install -y clang gcc",
-]
-
-[tool.cibuildwheel.linux.environment]
-HATCH_BUILD_HOOKS_ENABLE = "1"
-MYPYC_OPT_LEVEL = "3"
-MYPYC_DEBUG_LEVEL = "0"
-
-# Black needs Clang to compile successfully on Linux.
-CC = "clang"
+before-build = ["yum install -y clang"]
 
 [tool.isort]
 atomic = true

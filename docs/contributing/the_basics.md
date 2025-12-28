@@ -22,7 +22,7 @@ $ python3 -m venv .venv
 $ source .venv/bin/activate # activation for linux and mac
 $ .venv\Scripts\activate # activation for windows
 
-(.venv)$ pip install --group tests
+(.venv)$ pip install --group dev
 (.venv)$ pip install -e ".[d]"
 (.venv)$ pre-commit install
 ```
