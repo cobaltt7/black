@@ -139,8 +139,8 @@ def config() -> None:
         baseline_name = f"{base['ref']}-{baseline_rev[:SHA_LENGTH]}"
         baseline_cmd = f"git checkout {baseline_rev}"
 
-        target_name = f"pr-{pr_num}-{head['ref'][:SHA_LENGTH]}"
-        target_cmd = f"gh pr checkout {pr_num}\ngit merge origin/{head['sha']}"
+        target_name = f"pr-{pr_num}-{head['sha'][:SHA_LENGTH]}"
+        target_cmd = f"gh pr checkout {pr_num}\ngit merge origin/{head['ref']}"
     else:
         raise ValueError(f"Unknown event {event}")
 
@@ -198,8 +198,8 @@ def comment_details(styles: tuple[str, ...]) -> None:
     base, head, _ = get_pr_branches()
 
     lines = [
-        f"**diff-shades** results comparing this PR ({base['sha']}) to {head['ref']}"
-        f" ({head['sha']}):"
+        f"**diff-shades** results comparing this PR ({head['sha']}) to {base['ref']}"
+        f" ({base['sha']}):"
     ]
     for style in styles:
         with open(f".{style} {COMMENT_FILE}", "r", encoding="utf-8") as f:
