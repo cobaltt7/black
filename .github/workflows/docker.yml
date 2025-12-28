@@ -59,6 +59,7 @@ jobs:
           tags: pyfound/black:latest_release
 
       - name: Build and push latest_prerelease tag
+        id: docker_build
         if:
           ${{ github.event_name == 'release' && github.event.action == 'published' &&
           github.event.release.prerelease }}
