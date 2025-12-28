@@ -44,6 +44,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: pyfound/black:latest,pyfound/black:${{ env.GIT_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build and push latest_release tag
         if:
