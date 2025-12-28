@@ -225,7 +225,7 @@ jobs:
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: .${{ matrix.style }}.pr-comment.md
-          path: .pr-comment.md
+          path: .${{ matrix.style }}.pr-comment.md
           include-hidden-files: true
 
       - name: Verify zero changes (PR only)
@@ -238,7 +238,6 @@ jobs:
           && exit 1)
 
   comment:
-    name: comment
     needs: ["configure", "compare"]
     if: ${{ !cancelled() && github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest

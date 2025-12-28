@@ -21,6 +21,7 @@ import pprint
 import subprocess
 import sys
 from base64 import b64encode
+from os.path import dirname, join
 from pathlib import Path
 from typing import Any, Final
 
@@ -187,8 +188,9 @@ def comment_body(baseline: Path, target: Path, style: str, mode: str) -> None:
     else:
         body = f"<code>--{style}</code> style: no changes"
 
-    print(f"[INFO]: writing comment details to {COMMENT_FILE}")
-    with open(COMMENT_FILE, "w", encoding="utf-8") as f:
+    filename = f".{style}{COMMENT_FILE}"
+    print(f"[INFO]: writing comment details to {filename}")
+    with open(filename, "w", encoding="utf-8") as f:
         f.write(body)
 
 
@@ -202,7 +204,11 @@ def comment_details(styles: tuple[str, ...]) -> None:
         f" ({base['sha']}):"
     ]
     for style in styles:
-        with open(f".{style}{COMMENT_FILE}", "r", encoding="utf-8") as f:
+        with open(
+            join(dirname(__file__), "..", f".{style}{COMMENT_FILE}"),
+            "r",
+            encoding="utf-8",
+        ) as f:
             content = f.read()
             lines.append(content)
 
