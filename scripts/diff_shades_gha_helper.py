@@ -33,10 +33,10 @@ DIFF_STEP_NAME: Final = "Generate HTML diff report"
 DOCS_URL: Final = (
     "https://black.readthedocs.io/en/latest/contributing/gauging_changes.html#diff-shades"
 )
-USER_AGENT: Final = f"psf/black diff-shades workflow via urllib3/{urllib3.__version__}"
 SHA_LENGTH: Final = 10
 GH_API_TOKEN: Final = os.getenv("GITHUB_TOKEN")
 REPO: Final = os.getenv("GITHUB_REPOSITORY", default="psf/black")
+USER_AGENT: Final = f"{REPO} diff-shades workflow via urllib3/{urllib3.__version__}"
 http = urllib3.PoolManager()
 
 
@@ -163,10 +163,10 @@ def config() -> None:
 @click.argument("style")
 @click.argument("mode")
 def comment_body(baseline: Path, target: Path, style: str, mode: str) -> None:
-    cmd = " ".split(
+    cmd = (
         f"{sys.executable} -m diff_shades --no-color "
         f"compare {baseline} {target} --quiet --check"
-    )
+    ).split(" ")
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, encoding="utf-8")
     if proc.returncode:
         run_id = os.getenv("GITHUB_RUN_ID")
