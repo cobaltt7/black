@@ -7,7 +7,7 @@ on:
       - src/**
       - tests/**
       - tox.ini
-      - pyproject.yml
+      - pyproject.toml
 
   pull_request:
     paths:
@@ -15,7 +15,7 @@ on:
       - src/**
       - tests/**
       - tox.ini
-      - pyproject.yml
+      - pyproject.toml
 
 permissions:
   contents: read
