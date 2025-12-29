@@ -420,7 +420,7 @@ Use the [Spotless](https://github.com/diffplug/spotless/tree/main/plugin-gradle)
 
 Add the following hook to your kakrc, then run _Black_ with `:format`.
 
-```kak
+```
 hook global WinSetOption filetype=python %{
     set-option window formatcmd 'black -q  -'
 }
