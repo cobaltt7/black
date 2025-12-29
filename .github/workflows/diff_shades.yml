@@ -152,10 +152,9 @@ jobs:
 
       - name: Analyze target revision (with repeated projects)
         if: steps.baseline-cache.outputs.cache-hit == 'true'
-        # prettier-ignore
-        run:
-          diff-shades analyze ${{ matrix.target-analysis }} --work-dir projects-cache/
-          --force-${{ matrix.style }}-style -v
+        run: |
+          diff-shades analyze ${{ matrix.target-analysis }} --work-dir projects-cache/ \
+          --force-${{ matrix.style }}-style -v \
           --repeat-projects-from ${{ matrix.baseline-analysis }}
 
       - name: Analyze target revision (without repeated projects)
@@ -199,9 +198,8 @@ jobs:
           pip-install: --group diff-shades --group diff-shades-comment
 
       - name: Generate HTML diff report
-        # prettier-ignore
-        run:
-          diff-shades --dump-html diff.html
+        run: |
+          diff-shades --dump-html diff.html \
           compare --diff ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
 
       - name: Upload diff report
@@ -214,10 +212,9 @@ jobs:
         if: github.event_name == 'pull_request'
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        # prettier-ignore
-        run:
-          python scripts/diff_shades_gha_helper.py comment-body
-          ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }}
+        run: |
+          python scripts/diff_shades_gha_helper.py comment-body \
+          ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }} \
           ${{ matrix.style }} ${{ matrix.mode }}
 
       - name: Upload summary file (PR only)
@@ -230,11 +227,10 @@ jobs:
 
       - name: Verify zero changes (PR only)
         if: matrix.mode == 'assert-no-changes'
-        # prettier-ignore
-        run: >
-          diff-shades compare --check
-          ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }} ||
-          (echo "Please verify you didn't change the stable code style unintentionally!"
+        run: |
+          diff-shades compare --check \
+          ${{ matrix.baseline-analysis }} ${{ matrix.target-analysis }} || \
+          (echo "Please verify you didn't change the stable code style unintentionally!" \
           && exit 1)
 
   comment:
@@ -263,9 +259,8 @@ jobs:
         id: metadata
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        # prettier-ignore
-        run:
-          python scripts/diff_shades_gha_helper.py comment-details
+        run: |
+          python scripts/diff_shades_gha_helper.py comment-details \
           ${{ join(fromJson(needs.configure.outputs.matrix).*.style, ' ') }}
 
       - name: Try to find pre-existing PR comment

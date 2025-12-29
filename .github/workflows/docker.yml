@@ -75,7 +75,8 @@ jobs:
           context: .
           platforms: ${{ matrix.platform }}
           tags: ${{ needs.tags.outputs.tags }}
-          outputs: type=docker,dest=images/${{ steps.image.outputs.image }}.tar
+          outputs:
+            type=image,name-canonical=true,dest=images/${{ steps.image.outputs.image }}.tar
           cache-from: type=gha,scope=${{ steps.image.outputs.image }}
           cache-to: type=gha,scope=${{ steps.image.outputs.image }},mode=max
 
@@ -109,18 +110,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Load images
-        run: |
-          docker load < images/image-linux-amd64.tar
-          docker load < images/image-linux-arm64.tar
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Push images and create manifests
+      - name: Create manifest list and push
+        working-directory: images
         run: |
-          for tag in $(echo "$TAGS" | tr ',' ' '); do
-            docker push "$tag" --all-tags
+          docker buildx imagetools create -t ${TAGS/,/ -t } \
+          $(printf '${{ env.REPO }}@sha256:%s ' *)
 
-            docker manifest create "$tag" "$tag@$(docker inspect --format='{{.Id}}' "$tag")"
-            docker manifest push "$tag"
-          done
-        env:
-          TAGS: ${{ needs.tags.outputs.tags }}
+      - name: Inspect image
+        run: docker buildx imagetools inspect ${{ env.REPO }}:latest
