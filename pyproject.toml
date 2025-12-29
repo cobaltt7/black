@@ -30,7 +30,7 @@ requires = ["hatch-fancy-pypi-readme", "hatch-vcs", "hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "black"
+name = "black-cobaltt7-test"
 description = "The uncompromising code formatter."
 license = "MIT"
 license-files = ["LICENSE"]
