@@ -2,7 +2,8 @@ name: docker
 
 on:
   push:
-    branches: [main]
+    branches:
+      - "main"
   release:
     types: [published]
 
@@ -10,24 +11,28 @@ permissions:
   contents: read
 
 env:
-  REPO: cobaltt7/test
+  REGISTRY: cobaltt7/test
 
 jobs:
   build:
-    name: build (${{ matrix.platform }})
+    # if: github.repository == 'psf/black'
     runs-on: ${{ matrix.runner }}
+    name: build (${{ matrix.platform }})
     strategy:
       matrix:
         include:
-          - runner: ubuntu-latest
-            platform: linux/amd64
-          - runner: ubuntu-24.04-arm
-            platform: linux/arm64
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
       - name: Login to DockerHub
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
@@ -35,41 +40,38 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
-
-      - name: Name image
-        id: image
-        run: echo "image=image-${ARCH/\//-}" >> "$GITHUB_OUTPUT"
+      - name: Prepare
+        id: prepare
+        run: echo "platform=${platform//\//-}" >> $GITHUB_OUTPUT
         env:
-          ARCH: ${{ matrix.platform }}
+          platform: ${{ matrix.platform }}
 
-      - name: Build and export
+      - name: Build and push
         id: build
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
           platforms: ${{ matrix.platform }}
-          tags: ${{ env.REPO }}
-          # prettier-ignore
-          outputs:
-            type=image,push=true,push-by-digest=true,name-canonical=true,dest=images/${{ steps.image.outputs.image }}.tar
-          cache-from: type=gha,scope=${{ steps.image.outputs.image }}
-          cache-to: type=gha,scope=${{ steps.image.outputs.image }},mode=max
+          outputs: type=image,push-by-digest=true,name-canonical=true,push=true
+          tags: ${{ env.REGISTRY }}
+          cache-from: type=gha,scope=${{ steps.prepare.outputs.platform }}
+          cache-to: type=gha,scope=${{ steps.prepare.outputs.platform }},mode=max
 
-      - name: Image digest
-        run: echo "$DIGEST"
+      - name: Export digest
+        run: |
+          mkdir -p digests
+          touch "digests/${digest#sha256:}"
         env:
-          DIGEST: ${{ steps.build.outputs.digest }}
+          digest: ${{ steps.build.outputs.digest }}
 
-      - name: Upload image artifact
+      - name: Upload digest
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.build.outputs.digest }}
-          path: images/${{ steps.image.outputs.image }}.tar
+          name: digests-${{ steps.prepare.outputs.platform }}
+          path: digests/*
+          if-no-files-found: error
 
   push:
-    # if: github.repository == 'psf/black'
     runs-on: ubuntu-latest
     needs: build
 
@@ -79,6 +81,13 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: digests
+          pattern: digests-*
+          merge-multiple: true
+
       - name: Login to DockerHub
         uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
@@ -88,34 +97,27 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
-      - name: Download images
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-        with:
-          merge-multiple: true
-          path: images
-          pattern: image-*
-
       - name: Create manifest list and push
         run: |
-          TAGS="-t $REPO:latest"
+          TAGS="-t $REGISTRY:latest"
 
           if [[ "$EVENT_NAME" == "release" ]]; then
-            TAGS="$TAGS -t $REPO:$(git describe --candidates=0 --tags)"
+            TAGS="$TAGS -t $REGISTRY:$(git describe --candidates=0 --tags)"
 
             if [[ "$PRERELEASE" == "true" ]]; then
-              TAGS="$TAGS -t $REPO:latest_prerelease"
+              TAGS="$TAGS -t $REGISTRY:latest_prerelease"
             else
-              TAGS="$TAGS -t $REPO:latest_release"
+              TAGS="$TAGS -t $REGISTRY:latest_release"
             fi
           else
-            TAGS="$TAGS -t $REPO:latest_non_release"
+            TAGS="$TAGS -t $REGISTRY:latest_non_release"
           fi
 
-          cd images
-          docker buildx imagetools create $TAGS $(printf '$REPO@sha256:%s ' *)
+          cd digests
+          docker buildx imagetools create $TAGS $(printf '$REGISTRY@sha256:%s ' *)
         env:
           EVENT_NAME: ${{ github.event_name }}
           PRERELEASE: ${{ github.event.release.prerelease }}
 
       - name: Inspect image
-        run: docker buildx imagetools inspect $REPO:latest
+        run: docker buildx imagetools inspect $REGISTRY:latest
