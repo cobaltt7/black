@@ -94,12 +94,12 @@ def get_latest_revision(ref: str) -> str:
 def get_pr_branches() -> tuple[Any, Any, int]:
     pr_ref = os.getenv("GITHUB_REF")
     assert pr_ref is not None
-    pr_num = int(pr_ref[10:-6])
+    pr = int(pr_ref[10:-6])
 
-    data = http_get(f"https://api.github.com/repos/{REPO}/pulls/{pr_num}")
+    data = http_get(f"https://api.github.com/repos/{REPO}/pulls/{pr}")
     assert isinstance(data["base"]["sha"], str)
     assert isinstance(data["head"]["sha"], str)
-    return data["base"], data["head"], pr_num
+    return data["base"], data["head"], pr
 
 
 def get_pypi_version() -> Version:
