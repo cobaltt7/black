@@ -9,7 +9,7 @@ system.
 
 First clone the _Black_ repository:
 
-```console
+```sh
 $ git clone https://github.com/psf/black.git
 $ cd black
 ```
@@ -17,7 +17,7 @@ $ cd black
 Then install development dependencies inside a virtual environment of your choice, for
 example:
 
-```console
+```sh
 $ python3 -m venv .venv
 $ source .venv/bin/activate # activation for linux and mac
 $ .venv\Scripts\activate # activation for windows
@@ -30,7 +30,7 @@ $ .venv\Scripts\activate # activation for windows
 Before submitting pull requests, run lints and tests with the following commands from
 the root of the black repo:
 
-```console
+```sh
 # Linting
 (.venv)$ pre-commit run -a
 
@@ -48,7 +48,7 @@ the root of the black repo:
 
 Further examples of invoking the tests
 
-```console
+```sh
 # Run all of the above mentioned, in parallel
 (.venv)$ tox --parallel=auto
 
