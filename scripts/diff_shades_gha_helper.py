@@ -180,12 +180,9 @@ def comment_body(baseline: Path, target: Path, style: str, mode: str) -> None:
 
         body = (
             "<details>"
-
             f"<summary><b><code>--{style}</code> style</b> "
             f'(<a href="{diff_url}">View full diff</a>):</summary>'
-
             f"<pre>{proc.stdout.strip()}</pre>"
-
             "</details>"
         )
     else:
