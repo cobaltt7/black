@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 env:
-  repo: cobaltt7/test
+  REPO: cobaltt7/test
 
 jobs:
   tags:
