@@ -75,8 +75,9 @@ jobs:
           context: .
           platforms: ${{ matrix.platform }}
           tags: ${{ needs.tags.outputs.tags }}
+          # prettier-ignore
           outputs:
-            type=image,name-canonical=true,dest=images/${{ steps.image.outputs.image }}.tar
+            type=image,push=true,push-by-digest=true,name-canonical=true,dest=images/${{ steps.image.outputs.image }}.tar
           cache-from: type=gha,scope=${{ steps.image.outputs.image }}
           cache-to: type=gha,scope=${{ steps.image.outputs.image }},mode=max
 
@@ -88,7 +89,7 @@ jobs:
       - name: Upload image artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.image.outputs.image }}
+          name: ${{ steps.build.outputs.digest }}
           path: images/${{ steps.image.outputs.image }}.tar
 
   push:
@@ -114,10 +115,9 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Create manifest list and push
-        working-directory: images
         run: |
-          docker buildx imagetools create -t ${TAGS/,/ -t } \
-          $(printf '${{ env.REPO }}@sha256:%s ' *)
+          cd images
+          docker buildx imagetools create -t ${TAGS/,/ -t } $(printf '${{ env.REPO }}@sha256:%s ' *)
 
       - name: Inspect image
         run: docker buildx imagetools inspect ${{ env.REPO }}:latest
