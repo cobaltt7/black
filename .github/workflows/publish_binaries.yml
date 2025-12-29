@@ -13,14 +13,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - windows-latest
-          - windows-11-arm
-          - ubuntu-latest
-          - ubuntu-22.04-arm
-          - macos-latest
         include:
-          - os: windows-2025
+          - os: windows-latest
             pathsep: ";"
             asset_name: black_windows.exe
             executable_mime: "application/vnd.microsoft.portable-executable"
@@ -28,11 +22,11 @@ jobs:
             pathsep: ";"
             asset_name: black_windows-arm.exe
             executable_mime: "application/vnd.microsoft.portable-executable"
-          - os: ubuntu-22.04
+          - os: ubuntu-latest
             pathsep: ":"
             asset_name: black_linux
             executable_mime: "application/x-executable"
-          - os: ubuntu-22.04-arm
+          - os: ubuntu-24.04-arm
             pathsep: ":"
             asset_name: black_linux-arm
             executable_mime: "application/x-executable"

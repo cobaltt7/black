@@ -2,8 +2,7 @@ name: docker
 
 on:
   push:
-    branches:
-      - "main"
+    branches: [main]
   release:
     types: [published]
 
@@ -11,66 +10,113 @@ permissions:
   contents: read
 
 jobs:
-  docker:
+  tags:
     # if: github.repository == 'psf/black'
     runs-on: ubuntu-latest
+    outputs:
+      tags: ${{ steps.tags.outputs.tags }}
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+      - name: Compute tags
+        id: tags
+        run: |
+          TAGS="pyfound/black:latest"
+          TAGS="$TAGS,$(git describe --candidates=0 --tags 2> /dev/null || echo latest_non_release)"
+
+          if [[ "$EVENT_NAME" == "release" ]]; then
+            if [[ "$PRERELEASE" == "true" ]]; then
+              TAGS="$TAGS,pyfound/black:latest_prerelease"
+            else
+              TAGS="$TAGS,pyfound/black:latest_release"
+            fi
+          fi
+
+          echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+
+  build:
+    name: build (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    needs: tags
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            platform: linux/amd64
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
-      # - name: Login to DockerHub
-      #   uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
-      #   with:
-      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
-      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Name image
+        id: image
+        run: echo "image=image-${ARCH/\//-}" >> "$GITHUB_OUTPUT"
+        env:
+          ARCH: ${{ matrix.platform }}
 
-      - name: Check + set version tag
-        run:
-          echo "GIT_TAG=$(git describe --candidates=0 --tags 2> /dev/null || echo
-          latest_non_release)" >> $GITHUB_ENV
-
-      - name: Build and push
+      - name: Build and export
+        id: build
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: pyfound/black:latest,pyfound/black:${{ env.GIT_TAG }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push latest_release tag
-        if:
-          ${{ github.event_name == 'release' && github.event.action == 'published' &&
-          !github.event.release.prerelease }}
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: pyfound/black:latest_release
-
-      - name: Build and push latest_prerelease tag
-        id: docker_build
-        if:
-          ${{ github.event_name == 'release' && github.event.action == 'published' &&
-          github.event.release.prerelease }}
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: pyfound/black:latest_prerelease
+          platforms: ${{ matrix.platform }}
+          tags: ${{ needs.tags.outputs.tags }}
+          outputs: type=oci,dest=/tmp/${{ steps.image.outputs.image }}.tar
+          cache-from: type=gha,scope=${{ steps.image.outputs.image }}
+          cache-to: type=gha,scope=${{ steps.image.outputs.image }},mode=max
 
       - name: Image digest
-        run: echo ${STEPS_DOCKER_BUILD_OUTPUTS_DIGEST}
+        run: echo "$DIGEST"
         env:
-          STEPS_DOCKER_BUILD_OUTPUTS_DIGEST: ${{ steps.docker_build.outputs.digest }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.image.outputs.image }}
+          path: /tmp/${{ steps.image.outputs.image }}.tar
+
+  push:
+    needs: [tags, build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download amd64 image
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: /tmp
+
+      - name: Login to DockerHub
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Load images
+        run: |
+          docker load < /tmp/image-linux-amd64.tar
+          docker load < /tmp/image-linux-arm64.tar
+
+      - name: Push images and create manifests
+        run: |
+          for tag in $(echo "$TAGS" | tr ',' ' '); do
+            docker push "$tag" --all-tags
+
+            docker manifest create "$tag" "$tag@$(docker inspect --format='{{.Id}}' "$tag")"
+            docker manifest push "$tag"
+          done
+        env:
+          TAGS: ${{ needs.tags.outputs.tags }}
