@@ -39,7 +39,7 @@ abdfd8b0 (Alice Doe  2019-09-23 11:39:32 -0400 2)     text = text.lstrip()
 You can even configure `git` to automatically ignore revisions listed in a file on every
 call to `git blame`.
 
-```console
+```sh
 $ git config blame.ignoreRevsFile .git-blame-ignore-revs
 ```
 
