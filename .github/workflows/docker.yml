@@ -59,9 +59,7 @@ jobs:
 
       - name: Name image
         id: image
-        run: |
-          echo "image=image-${ARCH/\//-}" >> "$GITHUB_OUTPUT"
-          mkdir /images
+        run: echo "image=image-${ARCH/\//-}" >> "$GITHUB_OUTPUT"
         env:
           ARCH: ${{ matrix.platform }}
 
@@ -71,7 +69,7 @@ jobs:
         with:
           platforms: ${{ matrix.platform }}
           tags: ${{ needs.tags.outputs.tags }}
-          outputs: type=oci,dest=/images/${{ steps.image.outputs.image }}.tar
+          outputs: type=oci,dest=images/${{ steps.image.outputs.image }}.tar
           cache-from: type=gha,scope=${{ steps.image.outputs.image }}
           cache-to: type=gha,scope=${{ steps.image.outputs.image }},mode=max
 
@@ -84,7 +82,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.image.outputs.image }}
-          path: /images/${{ steps.image.outputs.image }}.tar
+          path: images/${{ steps.image.outputs.image }}.tar
 
   push:
     # if: github.repository == 'psf/black'
@@ -96,7 +94,7 @@ jobs:
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
           merge-multiple: true
-          path: /images
+          path: images
           pattern: image-*
 
       - name: Login to DockerHub
@@ -107,8 +105,8 @@ jobs:
 
       - name: Load images
         run: |
-          docker load < /images/image-linux-amd64.tar
-          docker load < /images/image-linux-arm64.tar
+          docker load < images/image-linux-amd64.tar
+          docker load < images/image-linux-arm64.tar
 
       - name: Push images and create manifests
         run: |
