@@ -75,7 +75,7 @@ jobs:
           context: .
           platforms: ${{ matrix.platform }}
           tags: ${{ needs.tags.outputs.tags }}
-          outputs: type=oci,dest=images/${{ steps.image.outputs.image }}.tar
+          outputs: type=docker,dest=images/${{ steps.image.outputs.image }}.tar
           cache-from: type=gha,scope=${{ steps.image.outputs.image }}
           cache-to: type=gha,scope=${{ steps.image.outputs.image }},mode=max
 
