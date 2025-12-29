@@ -257,11 +257,10 @@ jobs:
 
       - name: Get details from initial workflow run
         id: metadata
+        run: python scripts/diff_shades_gha_helper.py comment-details $styles
         env:
+          styles: join(fromJson(needs.configure.outputs.matrix).*.style, ',')
           GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          python scripts/diff_shades_gha_helper.py comment-details \
-          ${{ join(fromJson(needs.configure.outputs.matrix).*.style, ' ') }}
 
       - name: Try to find pre-existing PR comment
         id: find-comment

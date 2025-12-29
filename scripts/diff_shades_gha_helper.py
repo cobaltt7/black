@@ -141,7 +141,7 @@ def config() -> None:
         baseline_cmd = f"git checkout {baseline_rev}"
 
         target_name = f"pr-{pr_num}-{head['sha'][:SHA_LENGTH]}"
-        target_cmd = f"gh pr checkout {pr_num}\ngit merge origin/{head['ref']}"
+        target_cmd = f"gh pr checkout {pr_num}\ngit merge origin/{base['ref']}"
     else:
         raise ValueError(f"Unknown event {event}")
 
@@ -195,15 +195,15 @@ def comment_body(baseline: Path, target: Path, style: str, mode: str) -> None:
 
 
 @main.command("comment-details", help="Get PR comment resources from a workflow run.")
-@click.argument("styles", nargs=-1)
-def comment_details(styles: tuple[str, ...]) -> None:
+@click.argument("styles")
+def comment_details(styles: str) -> None:
     base, head, _ = get_pr_branches()
 
     lines = [
         f"**diff-shades** results comparing this PR ({head['sha']}) to {base['ref']}"
         f" ({base['sha']}):"
     ]
-    for style in styles:
+    for style in styles.split(","):
         with open(
             join(dirname(__file__), "..", f".{style}{COMMENT_FILE}"),
             "r",
