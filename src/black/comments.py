@@ -185,7 +185,7 @@ def make_comment(content: str, mode: Mode) -> str:
         content = type_part.strip() + ": " + value_part.strip()
 
     if content and content[0] not in COMMENT_EXCEPTIONS:
-        content = " " + content
+        content = "  " + content
     return "#" + content
 
 
