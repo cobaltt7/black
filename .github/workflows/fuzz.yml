@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: fuzz
     if:
-      always() && github.repository == 'psf/black' && github.event_name !=
+      always() && github.repository == 'cobaltt7/black' && github.event_name !=
       'pull_request' && needs.fuzz.result != 'success'
     permissions:
       issues: write
