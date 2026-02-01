@@ -40,12 +40,13 @@ jobs:
           pip-install: --group tox
 
       - name: Run fuzz tests
+        id: fuzz
         run: tox -e fuzz --result-json $python_ver
         env:
           python_ver: ${{ matrix.python-version }}
 
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        if: always()
+        if: failure() && steps.fuzz.outcome == 'failure'
         with:
           name: ${{ matrix.python-version }}
           path: ${{ matrix.python-version }}
@@ -54,8 +55,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: fuzz
     if:
-      always() && github.repository == 'cobaltt7/black' && github.event_name !=
-      'pull_request' && needs.fuzz.result != 'success'
+      github.repository == 'cobaltt7/black' && github.event_name != 'pull_request' &&
+      failure()
     permissions:
       issues: write
     steps:
