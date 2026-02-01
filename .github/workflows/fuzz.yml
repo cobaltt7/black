@@ -78,13 +78,11 @@ jobs:
 
       - name: Get existing issue
         id: issue
-        run: >
-          echo "ISSUE=$(
-            gh issue list
-              --A github-actions[bot]
-              --l 'ci: fuzz error'
-              --json number
-              --q .[0].number
+        run: |
+          echo "ISSUE=$( \
+            gh issue list \
+              -A github-actions[bot] -l 'ci: fuzz error' \
+              --json number -q .[0].number \
           )" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -92,10 +90,7 @@ jobs:
       - name: Create new issue
         if: steps.issue.outputs.ISSUE == ''
         run: >
-          gh issue create
-            -t "Fuzz test failure"
-            -l "ci: fuzz error"
-            -f issue-body.html
+          gh issue create -t "Fuzz test failure" -l "ci: fuzz error" -f issue-body.html
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
