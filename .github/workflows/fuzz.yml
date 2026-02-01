@@ -71,12 +71,12 @@ jobs:
           touch $output
           for FILE in ./output/*; do
             echo "**Python $(basename $FILE)**\n" >> $output
-            echo "```py\n" >> $output
-              echo "# stdout:\n" >> $output
-              echo "$(jq .testenvs.fuzz.test[-1].output $FILE -r)\n\n" >> $output
-              echo "# stderr:\n" >> $output
-              echo "$(jq .testenvs.fuzz.test[-1].err $FILE -r)\n" >> $output
-            echo "```\n\n" >> $output
+            echo -e "\`\`\`py\n" >> $output
+              echo -e "# stdout:\n" >> $output
+              echo -e "$(jq .testenvs.fuzz.test[-1].output $FILE -r)\n\n" >> $output
+              echo -e "# stderr:\n" >> $output
+              echo -e "$(jq .testenvs.fuzz.test[-1].err $FILE -r)\n" >> $output
+            echo -e "\`\`\`\n\n" >> $output
           done
 
       - name: Get existing issue
