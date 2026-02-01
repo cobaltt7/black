@@ -86,6 +86,8 @@ jobs:
               --json number
               --q .[0].number
           )" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Create new issue
         if: steps.issue.outputs.ISSUE == ''
@@ -94,9 +96,12 @@ jobs:
             -t "Fuzz test failure"
             -l "ci: fuzz error"
             -f issue-body.html
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Edit existing issue
         if: steps.issue.outputs.ISSUE != ''
         run: gh issue edit $ISSUE -f issue-body.html
         env:
+          GITHUB_TOKEN: ${{ github.token }}
           ISSUE: ${{ steps.issue.outputs.ISSUE }}
