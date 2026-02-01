@@ -67,7 +67,7 @@ jobs:
       - name: Generate issue data
         run: |
           touch issue-body.html
-          for FILE in ./output; do
+          for FILE in ./output/*; do
             echo "<details>" >> issue-body.html
               echo "<summary><b>Python $FILE</b></summary>" >> issue-body.html
               echo "<pre>$(jq .testenvs.fuzz.test[-1].output $FILE)</pre>" >> issue-body.html
