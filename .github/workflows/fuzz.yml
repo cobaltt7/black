@@ -69,11 +69,10 @@ jobs:
           output=issue-body.html
           touch $output
           for FILE in ./output/*; do
-            file=$(basename $FILE)
             echo "<details>" >> $output
-              echo "<summary><b>Python $file</b></summary>" >> $output
-              echo "<pre>$(jq .testenvs.fuzz.test[-1].output $file -r)</pre>" >> $output
-              echo "<pre>$(jq .testenvs.fuzz.test[-1].err $file -r)</pre>" >> $output
+              echo "<summary><b>Python $(basename $FILE)</b></summary>" >> $output
+              echo "<pre>$(jq .testenvs.fuzz.test[-1].output $FILE -r)</pre>" >> $output
+              echo "<pre>$(jq .testenvs.fuzz.test[-1].err $FILE -r)</pre>" >> $output
             echo "</details>" >> $output
           done
 
