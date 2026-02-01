@@ -70,13 +70,13 @@ jobs:
           output=issue-body.html
           touch $output
           for FILE in ./output/*; do
-            echo "**Python $(basename $FILE)**\n" >> $output
-            echo -e "\`\`\`py\n" >> $output
-              echo -e "# stdout:\n" >> $output
-              echo -e "$(jq .testenvs.fuzz.test[-1].output $FILE -r)\n\n" >> $output
-              echo -e "# stderr:\n" >> $output
-              echo -e "$(jq .testenvs.fuzz.test[-1].err $FILE -r)\n" >> $output
-            echo -e "\`\`\`\n\n" >> $output
+            echo "**Python $(basename $FILE)**" >> $output
+            echo -e "\`\`\`py" >> $output
+              echo -e "# stdout:" >> $output
+              echo -e "$(jq .testenvs.fuzz.test[-1].output $FILE -r)\n" >> $output
+              echo -e "# stderr:" >> $output
+              echo -e "$(jq .testenvs.fuzz.test[-1].err $FILE -r)" >> $output
+            echo -e "\`\`\`\n" >> $output
           done
 
       - name: Get existing issue
