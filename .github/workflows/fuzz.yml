@@ -96,7 +96,7 @@ jobs:
 
       - name: Edit existing issue
         if: steps.issue.outputs.ISSUE != ''
-        run: gh issue edit $ISSUE -f issue-body.html
+        run: gh issue edit $ISSUE -F issue-body.html
         env:
           GITHUB_TOKEN: ${{ github.token }}
           ISSUE: ${{ steps.issue.outputs.ISSUE }}
