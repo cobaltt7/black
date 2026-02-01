@@ -90,7 +90,7 @@ jobs:
       - name: Create new issue
         if: steps.issue.outputs.ISSUE == ''
         run: >
-          gh issue create -t "Fuzz test failure" -l "ci: fuzz error" -f issue-body.html
+          gh issue create -t "Fuzz test failure" -l "ci: fuzz error" -F issue-body.html
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
