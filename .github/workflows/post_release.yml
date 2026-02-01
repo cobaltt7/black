@@ -15,7 +15,7 @@ jobs:
 
     steps:
       - name: Checkout stable branch
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           ref: stable
           fetch-depth: 0
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.release.prerelease != 'true'
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           ref: main
           fetch-tags: true
@@ -49,6 +49,7 @@ jobs:
         with:
           commit_message: Add new changelog
           branch: ci/new-changelog
+          create_branch: true
 
       - name: Create PR
         run: >
