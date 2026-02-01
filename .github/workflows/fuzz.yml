@@ -79,24 +79,27 @@ jobs:
       - name: Get existing issue
         id: issue
         run: |
-          echo "ISSUE=$( \
-            gh issue list \
-              -A github-actions[bot] -l 'ci: fuzz error' \
-              --json number -q .[0].number \
-          )" >> $GITHUB_OUTPUT
+          echo "ISSUE=$( gh issue list \
+          -A github-actions[bot] -l 'ci: fuzz error' \
+          --json number -q .[0].number \
+          -R $REPO )" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
 
       - name: Create new issue
         if: steps.issue.outputs.ISSUE == ''
         run: >
-          gh issue create -t "Fuzz test failure" -l "ci: fuzz error" -F issue-body.html
+          gh issue create -t "Fuzz test failure" -F issue-body.html -l "ci: fuzz error"
+          -R $REPO
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
 
       - name: Edit existing issue
         if: steps.issue.outputs.ISSUE != ''
-        run: gh issue edit $ISSUE -F issue-body.html
+        run: gh issue edit $ISSUE -F issue-body.html -R $REPO
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
           ISSUE: ${{ steps.issue.outputs.ISSUE }}
