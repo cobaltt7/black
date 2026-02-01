@@ -5,8 +5,6 @@ generation.  You can run this file with `python`, `pytest`, or (soon)
 a coverage-guided fuzzer I'm working on.
 """
 
-import sys
-
 import hypothesmith
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
@@ -50,8 +48,7 @@ def test_idempotent_any_syntatically_valid_python(
     black.assert_equivalent(src_contents, dst_contents)
     black.assert_stable(src_contents, dst_contents, mode=mode)
 
-    if sys.version_info >= (3, 14):
-        raise Exception("Forced fuzz failure")
+    raise Exception("Forced fuzz failure")
 
     # Future test: check that pure-python and mypyc versions of black
     # give identical output for identical input?
