@@ -66,13 +66,15 @@ jobs:
 
       - name: Generate issue data
         run: |
-          touch issue-body.html
+          output=issue-body.html
+          touch $output
           for FILE in ./output/*; do
-            echo "<details>" >> issue-body.html
-              echo "<summary><b>Python $FILE</b></summary>" >> issue-body.html
-              echo "<pre>$(jq .testenvs.fuzz.test[-1].output $FILE)</pre>" >> issue-body.html
-              echo "<pre>$(jq .testenvs.fuzz.test[-1].err $FILE)</pre>" >> issue-body.html
-            echo "</details>" >> issue-body.html
+            file=$(basename $FILE)
+            echo "<details>" >> $output
+              echo "<summary><b>Python $file</b></summary>" >> $output
+              echo "<pre>$(jq .testenvs.fuzz.test[-1].output $file -r)</pre>" >> $output
+              echo "<pre>$(jq .testenvs.fuzz.test[-1].err $file -r)</pre>" >> $output
+            echo "</details>" >> $output
           done
 
       - name: Get existing issue
