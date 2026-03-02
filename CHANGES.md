@@ -13,15 +13,9 @@
 
 <!-- Changes that affect Black's stable style -->
 
-- Don't double-decode input, causing non-UTF-8 files to be corrupted (#4964)
-
 ### Preview style
 
 <!-- Changes that affect Black's preview style -->
-
-- Fix `string_processing` crashing on unassigned long string literals with trailing
-  commas (one-item tuples) (#4929)
-- Simplify implementation of the power operator "hugging" logic (#4918)
 
 ### Configuration
 
@@ -30,9 +24,6 @@
 ### Packaging
 
 <!-- Changes to how Black is packaged, such as dependency requirements -->
-
-- Fix shutdown errors in PyInstaller builds on macOS by disabling multiprocessing in
-  frozen environments (#4930)
 
 ### Parser
 
