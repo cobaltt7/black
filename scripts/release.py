@@ -113,9 +113,12 @@ class SourceFiles:
   Is prerelease: {bool(self.force_next_version)}
 """
 
-    def get_current_version(self) -> str:
+    def get_current_version(self) -> str | None:
         """Get the latest git (version) tag as latest version"""
-        return sorted(get_git_tags(), key=lambda k: tuple_calver(k))[-1]
+        versions = sorted(get_git_tags(), key=lambda k: tuple_calver(k))
+        if versions:
+            return versions[-1]
+        return None
 
     def get_next_version(self) -> str:
         """Determine the year and month + version number to bump to"""
@@ -127,7 +130,7 @@ class SourceFiles:
         base_calver = f"{calver_parts[0]}.{int(calver_parts[1])}"  # Remove leading 0
 
         current_version = self.get_current_version()
-        if not current_version.startswith(base_calver):
+        if not current_version or not current_version.startswith(base_calver):
             return f"{base_calver}.0"
 
         same_month_version = current_version.split(".", 2)[-1]
@@ -168,10 +171,12 @@ class SourceFiles:
         with self.changes_path.open("r", encoding="utf-8") as cfp:
             changes_string = cfp.read()
 
-        # Change Unreleased to next version
-        changes_string = changes_string.replace(
-            "## Unreleased", f"## Version {self.get_next_version()}"
-        )
+        current_version = self.get_current_version()
+        if current_version:
+            # Change Unreleased to next version
+            changes_string = changes_string.replace(
+                "## Unreleased", f"## Version {current_version}"
+            )
 
         # Remove all comments
         changes_string = re.sub(r"(?m)^<!--(?>(?:.|\n)*?-->)\n+", "", changes_string)
@@ -186,7 +191,10 @@ class SourceFiles:
 
     def update_version_in_docs(self) -> None:
         current_version = self.get_current_version()
+        if not current_version:
+            return
         next_version = self.get_next_version()
+
         for doc_path in self.version_doc_paths:
             LOG.info(f"Updating Black version to {next_version} in {doc_path}")
 
@@ -205,10 +213,15 @@ class SourceFiles:
     def get_changelog(self) -> str:
         with self.changes_path.open("r", encoding="utf-8") as cfp:
             changes_string = cfp.read()
-        before_current = changes_string.split(
-            f"## Version {self.get_current_version()}"
-        )[0]
-        return before_current.split(f"## Version {self.get_next_version()}")[1].strip()
+
+        current_version = self.get_current_version()
+        if not current_version:
+            before_current = changes_string
+        else:
+            before_current = changes_string.split(f"## Version {current_version}")[0]
+
+        next_version = self.get_next_version()
+        return before_current.split(f"## Version {next_version}")[1].strip()
 
 
 def _handle_debug(debug: bool) -> None:
