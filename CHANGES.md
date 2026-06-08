@@ -2,10 +2,6 @@
 
 ## Version 26.6.0
 
-- Add support for NO_COLOR environment variable to disable ANSI output (#5129)
-- No spurious target version warning when runtime version is included in a
-  --target-version flag (#5167)
-
 ### Stable style
 
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
@@ -36,6 +32,9 @@
   `srcs` are given) is now resolved before the `lru_cache` key is computed, so each
   directory gets the correct `pyproject.toml` (#5152)
 - Add validation for --line-ranges values (#5107)
+- Add support for NO_COLOR environment variable to disable ANSI output (#5129)
+- No spurious target version warning when runtime version is included in a
+  --target-version flag (#5167)
 
 ### Performance
 
