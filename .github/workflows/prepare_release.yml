@@ -50,6 +50,7 @@ jobs:
           gh release create "$VERSION" -d -t "$VERSION" \
           ${{ case(inputs.Prerelease_Version == '', '', '-p') }}
         env:
+          GITHUB_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
 
       - name: Commit changes
@@ -79,17 +80,17 @@ jobs:
             -l "ci: skip news" -l "C: maintenance" \
             -a $USER
         env:
-          VERSION: ${{ steps.version.outputs.version }}
           GITHUB_TOKEN: ${{ github.token }}
           USER: ${{ github.triggering_actor }}
+          VERSION: ${{ steps.version.outputs.version }}
 
       - name: Edit release PR
         if: github.event_name == 'push'
         run: |
           gh pr edit "$BRANCH" -F description.md
         env:
-          BRANCH: ${{ env.branch }}
           GITHUB_TOKEN: ${{ github.token }}
+          BRANCH: ${{ env.branch }}
 
   binaries:
     name: build binaries (${{ matrix.os }})
@@ -152,5 +153,5 @@ jobs:
         run: gh release upload "$VERSION" dist/${{ matrix.asset_name }} --clobber
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.prepare.outputs.version }}
