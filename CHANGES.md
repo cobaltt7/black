@@ -1,21 +1,12 @@
 # Change Log
 
-## Unreleased
-
-<!-- PR authors:
-     Please include the PR number in the changelog entry, not the issue number -->
+## Version 26.6.0
 
 - Add support for NO_COLOR environment variable to disable ANSI output (#5129)
 - No spurious target version warning when runtime version is included in a
   --target-version flag (#5167)
 
-### Highlights
-
-<!-- Include any especially major or disruptive changes here -->
-
 ### Stable style
-
-<!-- Changes that affect Black's stable style -->
 
 - Fix crash when a standalone comment sits between tokens of a comprehension or lambda
   (#5144)
@@ -30,8 +21,6 @@
 
 ### Preview style
 
-<!-- Changes that affect Black's preview style -->
-
 - Stop splitting between a variable and its comparator (`not in`, `==`, `is`, ...) when
   the right-hand side is a bracketed expression. Black now lets the bracket explode
   instead. This fixes the awkward break that was showing up in comprehension `if`
@@ -42,25 +31,13 @@
 
 ### Configuration
 
-<!-- Changes to how Black can be configured -->
-
 - Fix `find_project_root` returning a stale cached result when `--code` is used from
   different working directories in the same process. The CWD fallback (used when no
   `srcs` are given) is now resolved before the `lru_cache` key is computed, so each
   directory gets the correct `pyproject.toml` (#5152)
 - Add validation for --line-ranges values (#5107)
 
-### Packaging
-
-<!-- Changes to how Black is packaged, such as dependency requirements -->
-
-### Parser
-
-<!-- Changes to the parser or to version autodetection -->
-
 ### Performance
-
-<!-- Changes that improve Black's performance. -->
 
 - Improve performance on strings containing many consecutive backslashes (#5163)
 - Improve performance when merging implicitly concatenated f-strings whose expressions
@@ -70,23 +47,6 @@
 - Improve performance on deeply nested parenthesised expressions by no longer
   re-scanning the whole atom for every nesting level in `max_delimiter_priority_in_atom`
   (#5171)
-
-### Output
-
-<!-- Changes to Black's terminal output and error messages -->
-
-### _Blackd_
-
-<!-- Changes to blackd -->
-
-### Integrations
-
-<!-- For example, Docker, GitHub Actions, pre-commit, editors -->
-
-### Documentation
-
-<!-- Major changes to documentation and policies. Small docs changes
-     don't need a changelog entry. -->
 
 ## Version 26.5.1
 
