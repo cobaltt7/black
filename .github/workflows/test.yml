@@ -74,7 +74,7 @@ jobs:
         # Upload coverage if we are on the main repository and
         # we're running on Linux (this action only supports Linux)
         if:
-          github.repository == 'psf/black' && matrix.os == 'ubuntu-latest' &&
+          github.repository == 'cobaltt7/black' && matrix.os == 'ubuntu-latest' &&
           !startsWith(matrix.python-version, 'pypy')
         uses: AndreMiras/coveralls-python-action@ac868b9540fad490f7ca82b8ca00480fd751ed19
         with:
@@ -85,7 +85,7 @@ jobs:
 
   coveralls-finish:
     needs: test
-    if: github.repository == 'psf/black'
+    if: github.repository == 'cobaltt7/black'
 
     runs-on: ubuntu-latest
     steps:

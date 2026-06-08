@@ -2,10 +2,9 @@ name: docker
 
 on:
   push:
-    branches:
-      - "main"
+    branches: main
   release:
-    types: [published]
+    types: published
 
 permissions:
   contents: read
@@ -15,7 +14,7 @@ env:
 
 jobs:
   build:
-    if: github.repository == 'psf/black'
+    if: github.repository == 'cobaltt7/black'
     runs-on: ${{ matrix.runner }}
     name: build (${{ matrix.platform }})
     strategy:

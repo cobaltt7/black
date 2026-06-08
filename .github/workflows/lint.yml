@@ -21,7 +21,7 @@ jobs:
           persist-credentials: false
 
       - name: Assert PR target is main
-        if: github.event_name == 'pull_request' && github.repository == 'psf/black'
+        if: github.event_name == 'pull_request' && github.repository == 'cobaltt7/black'
         run: |
           if [ "$GITHUB_BASE_REF" != "main" ]; then
               echo "::error::PR targeting '$GITHUB_BASE_REF', please refile targeting 'main'." && exit 1
