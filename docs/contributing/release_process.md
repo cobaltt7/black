@@ -47,6 +47,7 @@ To cut a release:
      - The first alpha should start `N` at `1` (not `0`).
      - Example: the first alpha released in December 2025 and to be stabilized in
        January 2026 is `26.1a1`.
+
 2. **Check the changelog diff in the PR description and copyedit `CHANGES.md`.** The CI
    will update it after each push, so double-check it again before you merge. Things to
    check include:
@@ -55,6 +56,7 @@ To cut a release:
    - Rephrase unclear or unnecessarily detailed entries (a sentence or two is probably
      plenty for most changes)
    - Remove duplicates, fix typos, and reorder entries if needed
+
 3. **If you're releasing a prerelease or major version, commit the changes unique to
    it** to the PR branch. If you make any changes that should have a changelog entry,
    remember to add one!
@@ -68,10 +70,12 @@ To cut a release:
 4. **Wait for CI to pass on the PR, and fix any failures.**
    - If CI does not pass, **stop** and investigate the failure(s) as we'd generally want
      to fix failing CI before cutting a release.
+
 5. **To cut a stable release, merge the PR once everything looks good.** If you're
    cutting a prerelease, **do not merge it**, and instead [run the "cut release"
    workflow][cut-release-workflow] manually. **Make sure to select the
    `ci/prepare-release` branch.**
+
 6. **Make sure CI passes.** At this point, you're basically done, but it's good practice
    to [watch and verify that all the release workflows pass][black-actions], though
    GitHub may notify you anyway if something fails.
@@ -106,7 +110,12 @@ of the initial chores before releasing.
 
 This job runs `scripts/release.py` to clean up CHANGES.md and bump most references to
 old _Black_ versions, then creates a PR with the changes for your review. It also
-creates a draft release for the next job to upload the binaries to.
+creates a draft release for the next job to upload the binaries to. The PR creation is
+authenticated in order to trigger test CI.
+
+```{note}
+_Currently this workflow uses a GitHub API Token associated with @TODO's account._
+```
 
 #### build binaries (…)
 
@@ -130,7 +139,8 @@ also completes final post-release chores.
 
 #### release
 
-Updates the release with the cleaned changelog and publishes it.
+Updates the release with the cleaned changelog and publishes it. This is authenticated
+in order to trigger the other release automation.
 
 ```{note}
 _Currently this workflow uses a GitHub API Token associated with @TODO's account._

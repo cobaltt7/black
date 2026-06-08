@@ -43,7 +43,7 @@ jobs:
       - name: Edit release
         run: gh release edit "$VERSION" -F latest-changelog.md --draft=false
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           VERSION: ${{ steps.version.outputs.version }}
 
   update-stable:
