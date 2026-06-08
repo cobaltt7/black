@@ -61,6 +61,7 @@ jobs:
             ${{ format('Prepare release {0}', steps.version.outputs.version) }}
           branch: ${{ env.branch }}
           create_branch: true
+          push_options: --force
 
       - name: Write PR description
         run: |
