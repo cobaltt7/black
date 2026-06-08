@@ -40,14 +40,15 @@ jobs:
       - name: Run script
         id: version
         run:
-          echo "version=$(python scripts/release.py -v "$VERSION")" >> "$GITHUB_OUTPUT"
+          echo "version=$(python scripts/release.py -V -v "$VERSION")" >>
+          "$GITHUB_OUTPUT"
         env:
           VERSION: ${{ inputs.Prerelease_Version }}
 
       - name: Create draft release
         if: github.event_name == 'workflow_dispatch'
         run: |
-          gh release create "$VERSION" -d -t "$VERSION" -n "" \
+          gh release create "$VERSION" -t "$VERSION" -n "" -d \
           ${{ case(inputs.Prerelease_Version == '', '', '-p') }}
         env:
           GITHUB_TOKEN: ${{ github.token }}

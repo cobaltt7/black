@@ -171,11 +171,11 @@ class SourceFiles:
         with self.changes_path.open("r", encoding="utf-8") as cfp:
             changes_string = cfp.read()
 
-        current_version = self.get_current_version()
-        if current_version:
+        next_version = self.get_next_version()
+        if next_version:
             # Change Unreleased to next version
             changes_string = changes_string.replace(
-                "## Unreleased", f"## Version {current_version}"
+                "## Unreleased", f"## Version {next_version}"
             )
 
         # Remove all comments
