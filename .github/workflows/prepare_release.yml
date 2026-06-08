@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
-          persist-credentials: false
+          persist-credentials: true # Needed for git-auto-commit-action
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -79,7 +79,7 @@ jobs:
           gh pr create \
             -t "Prepare release $VERSION" -F description.md \
             -l "ci: skip news" -l "C: maintenance" \
-            -a $USER
+            -a "$USER"
         env:
           GITHUB_TOKEN: ${{ github.token }}
           USER: ${{ github.triggering_actor }}

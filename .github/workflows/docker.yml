@@ -119,4 +119,4 @@ jobs:
           PRERELEASE: ${{ github.event.release.prerelease }}
 
       - name: Inspect image
-        run: docker buildx imagetools inspect $REGISTRY:latest
+        run: docker buildx imagetools inspect "$REGISTRY:latest"
