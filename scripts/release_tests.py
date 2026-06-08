@@ -26,7 +26,7 @@ class TestRelease(unittest.TestCase):
         # We only test on >= 3.12
         self.tempdir = TemporaryDirectory(delete=False)  # type: ignore
         self.tempdir_path = Path(self.tempdir.name)
-        self.sf = SourceFiles(self.tempdir_path)
+        self.sf = SourceFiles(self.tempdir_path, None)
 
     def tearDown(self) -> None:
         rmtree(self.tempdir.name)
@@ -40,7 +40,7 @@ class TestRelease(unittest.TestCase):
     @patch("release.get_git_tags")
     @patch("release.datetime", FakeDateTime)
     def test_get_next_version(self, mocked_git_tags: Mock) -> None:
-        # test we handle no args
+        # test we handle no prior releases
         mocked_git_tags.return_value = []
         self.assertEqual(
             "69.1.0",
@@ -48,7 +48,15 @@ class TestRelease(unittest.TestCase):
             "Unable to get correct next version with no git tags",
         )
 
-        # test we handle
+        # test we handle first release in a month
+        mocked_git_tags.return_value = ["1.1.0", "2.2.0"]
+        self.assertEqual(
+            "69.1.0",
+            self.sf.get_next_version(),
+            "Unable to get correct version for first release in a month",
+        )
+
+        # test we handle multiple releases in a month
         mocked_git_tags.return_value = ["1.1.0", "69.1.0", "69.1.1", "2.2.0"]
         self.assertEqual(
             "69.1.2",
@@ -61,7 +69,6 @@ class TestRelease(unittest.TestCase):
         first_month_release = tuple_calver("69.1.0")
         second_month_release = tuple_calver("69.1.1")
         self.assertEqual((69, 1, 0), first_month_release)
-        self.assertEqual((0, 0, 0), tuple_calver("69.1.1a0"))  # Hack for alphas/betas
         self.assertTrue(first_month_release < second_month_release)
 
 

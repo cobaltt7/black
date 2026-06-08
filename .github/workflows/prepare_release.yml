@@ -1,0 +1,155 @@
+name: prepare release
+
+on:
+  workflow_dispatch:
+    inputs:
+      Prerelease_Version:
+        description:
+          Set to create a prerelease or leave empty to create a stable release
+        type: string
+  push:
+    branches: ci/prepare-release
+
+permissions: {}
+
+env:
+  branch: ci/prepare-release
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to push to new branch
+      pull-requests: write # Needed to create PR
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.14"
+          pip-version: "25.3"
+
+      - name: Run script
+        id: version
+        run:
+          echo "version=$(python scripts/release.py -v "$VERSION")" >> "$GITHUB_OUTPUT"
+        env:
+          VERSION: ${{ inputs.Prerelease_Version }}
+
+      - name: Create draft release
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          gh release create "$VERSION" -d -t "$VERSION" \
+          ${{ case(inputs.Prerelease_Version == '', '', '-p') }}
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7.1.0
+        with:
+          commit_message:
+            ${{ format('Prepare release {0}', steps.version.outputs.version) }}
+          branch: ${{ env.branch }}
+          create_branch: true
+
+      - name: Write PR description
+        run: |
+          echo "Please follow the process in [the docs](https://black.readthedocs.io/en/latest/contributing/release_process.html#cutting-a-release) to cut a release." > description.md
+          echo "<details><summary>Changelog Diff</summary>" >> description.md
+          echo "" >> description.md
+          echo "\`\`\`diff" >> description.md
+          git diff origin/stable CHANGES.md >> description.md
+          echo "\`\`\`" >> description.md
+          echo "" >> description.md
+          echo "</details>" >> description.md
+
+      - name: Create release PR
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          gh pr create \
+            -t "Prepare release $VERSION" -F description.md \
+            -l "ci: skip news" -l "C: maintenance" \
+            -a $USER
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          GITHUB_TOKEN: ${{ github.token }}
+          USER: ${{ github.triggering_actor }}
+
+      - name: Edit release PR
+        if: github.event_name == 'push'
+        run: |
+          gh pr edit "$BRANCH" -F description.md
+        env:
+          BRANCH: ${{ env.branch }}
+          GITHUB_TOKEN: ${{ github.token }}
+
+  binaries:
+    name: build binaries (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            pathsep: ";"
+            asset_name: black_windows.exe
+            executable_mime: "application/vnd.microsoft.portable-executable"
+          - os: windows-11-arm
+            pathsep: ";"
+            asset_name: black_windows-arm.exe
+            executable_mime: "application/vnd.microsoft.portable-executable"
+          - os: ubuntu-latest
+            pathsep: ":"
+            asset_name: black_linux
+            executable_mime: "application/x-executable"
+          - os: ubuntu-24.04-arm
+            pathsep: ":"
+            asset_name: black_linux-arm
+            executable_mime: "application/x-executable"
+          - os: macos-latest
+            pathsep: ":"
+            asset_name: black_macos
+            executable_mime: "application/x-mach-binary"
+    permissions:
+      contents: write # Needed to upload to release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ env.branch }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.14"
+          pip-version: "25.3"
+          pip-install: .[colorama] --group pyinstaller
+
+      - name: Build executable with PyInstaller
+        run:
+          python -m PyInstaller -F --name ${{ matrix.asset_name }} --add-data
+          'src/blib2to3${{ matrix.pathsep }}blib2to3' src/black/__main__.py
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ needs.prepare.outputs.version }}
+
+      - name: Quickly test executable
+        run: |
+          ./dist/${{ matrix.asset_name }} --version
+          ./dist/${{ matrix.asset_name }} src --verbose
+
+      - name: Upload assets
+        run: gh release upload "$VERSION" dist/${{ matrix.asset_name }} --clobber
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}

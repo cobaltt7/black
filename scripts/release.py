@@ -55,7 +55,7 @@ NEW_VERSION_CHANGELOG_TEMPLATE = """\
 
 ### _Blackd_
 
-<!-- Changes to blackd -->
+<!-- Changes to Blackd -->
 
 ### Integrations
 
@@ -71,32 +71,24 @@ NEW_VERSION_CHANGELOG_TEMPLATE = """\
 class NoGitTagsError(Exception): ...
 
 
-# TODO: Do better with alpha + beta releases
-# Maybe we vendor packaging library
-def get_git_tags(versions_only: bool = True) -> list[str]:
-    """Pull out all tags or calvers only"""
+def get_git_tags() -> list[str]:
+    """List all stable version tags"""
     cp = run(["git", "tag"], capture_output=True, check=True, encoding="utf8")
     if not cp.stdout:
-        LOG.error(f"Returned no git tags stdout: {cp.stderr}")
+        LOG.error(f"Returned no git tags; stderr: {cp.stderr}")
         raise NoGitTagsError
     git_tags = cp.stdout.splitlines()
-    if versions_only:
-        return [t for t in git_tags if t[0].isdigit()]
-    return git_tags
+    return [t for t in git_tags if t[0].isdigit() and len(t.split(".")) == 3]
 
 
-# TODO: Support sorting alpha/beta releases correctly
 def tuple_calver(calver: str) -> tuple[int, ...]:  # mypy can't notice maxsplit below
     """Convert a calver string into a tuple of ints for sorting"""
-    try:
-        return tuple(map(int, calver.split(".", maxsplit=2)))
-    except ValueError:
-        return (0, 0, 0)
+    return tuple(map(int, calver.split(".", maxsplit=2)))
 
 
 class SourceFiles:
-    def __init__(self, black_repo_dir: Path):
-        # File path fun all pathlib to be platform agnostic
+    def __init__(self, black_repo_dir: Path, next_version: str | None):
+        # Use pathlib for all file path fun to be platform agnostic
         self.black_repo_path = black_repo_dir
         self.changes_path = self.black_repo_path / "CHANGES.md"
         self.docs_path = self.black_repo_path / "docs"
@@ -105,18 +97,41 @@ class SourceFiles:
             self.docs_path / "usage_and_configuration" / "the_basics.md",
             self.docs_path / "guides" / "using_black_with_jupyter_notebooks.md",
         )
-        self.current_version = self.get_current_version()
-        self.next_version = self.get_next_version()
+
+        self.force_next_version = next_version
+
+        LOG.debug(self)
 
     def __str__(self) -> str:
         return f"""\
 > SourceFiles ENV:
   Repo path: {self.black_repo_path}
   CHANGES.md path: {self.changes_path}
-  docs path: {self.docs_path}
-  Current version: {self.current_version}
-  Next version: {self.next_version}
+  Docs path: {self.docs_path}
+  Current version: {self.get_current_version()}
+  Next version: {self.get_next_version()}
+  Is prerelease: {bool(self.force_next_version)}
 """
+
+    def get_current_version(self) -> str:
+        """Get the latest git (version) tag as latest version"""
+        return sorted(get_git_tags(), key=lambda k: tuple_calver(k))[-1]
+
+    def get_next_version(self) -> str:
+        """Determine the year and month + version number to bump to"""
+        if self.force_next_version:
+            return self.force_next_version
+
+        base_calver = datetime.today().strftime("%y.%m")
+        calver_parts = base_calver.split(".")
+        base_calver = f"{calver_parts[0]}.{int(calver_parts[1])}"  # Remove leading 0
+
+        current_version = self.get_current_version()
+        if not current_version.startswith(base_calver):
+            return f"{base_calver}.0"
+
+        same_month_version = current_version.split(".", 2)[-1]
+        return f"{base_calver}.{int(same_month_version) + 1}"
 
     def add_template_to_changes(self) -> int:
         """Add the template to CHANGES.md if it does not exist"""
@@ -140,6 +155,13 @@ class SourceFiles:
         LOG.info(f"Added template to {self.changes_path}")
         return 0
 
+    def update_repo_for_release(self) -> int:
+        """Update CHANGES.md + doc files ready for release"""
+        self.cleanup_changes_template_for_release()
+        if not bool(self.force_next_version):
+            self.update_version_in_docs()
+        return 0  # return 0 if no exceptions hit
+
     def cleanup_changes_template_for_release(self) -> None:
         LOG.info(f"Cleaning up {self.changes_path}")
 
@@ -148,7 +170,7 @@ class SourceFiles:
 
         # Change Unreleased to next version
         changes_string = changes_string.replace(
-            "## Unreleased", f"## Version {self.next_version}"
+            "## Unreleased", f"## Version {self.get_next_version()}"
         )
 
         # Remove all comments
@@ -160,53 +182,37 @@ class SourceFiles:
         with self.changes_path.open("w", encoding="utf-8") as cfp:
             cfp.write(changes_string)
 
-        LOG.debug(f"Finished Cleaning up {self.changes_path}")
-
-    def get_current_version(self) -> str:
-        """Get the latest git (version) tag as latest version"""
-        return sorted(get_git_tags(), key=lambda k: tuple_calver(k))[-1]
-
-    def get_next_version(self) -> str:
-        """Workout the year and month + version number we need to move to"""
-        base_calver = datetime.today().strftime("%y.%m")
-        calver_parts = base_calver.split(".")
-        base_calver = f"{calver_parts[0]}.{int(calver_parts[1])}"  # Remove leading 0
-        git_tags = get_git_tags()
-        same_month_releases = [
-            t for t in git_tags if t.startswith(base_calver) and "a" not in t
-        ]
-        if len(same_month_releases) < 1:
-            return f"{base_calver}.0"
-        same_month_version = same_month_releases[-1].split(".", 2)[-1]
-        return f"{base_calver}.{int(same_month_version) + 1}"
-
-    def update_repo_for_release(self) -> int:
-        """Update CHANGES.md + doc files ready for release"""
-        self.cleanup_changes_template_for_release()
-        self.update_version_in_docs()
-        return 0  # return 0 if no exceptions hit
+        LOG.debug(f"Finished cleaning up {self.changes_path}")
 
     def update_version_in_docs(self) -> None:
+        current_version = self.get_current_version()
+        next_version = self.get_next_version()
         for doc_path in self.version_doc_paths:
-            LOG.info(f"Updating black version to {self.next_version} in {doc_path}")
+            LOG.info(f"Updating Black version to {next_version} in {doc_path}")
 
             with doc_path.open("r", encoding="utf-8") as dfp:
                 doc_string = dfp.read()
 
-            next_version_doc = doc_string.replace(
-                self.current_version, self.next_version
-            )
+            next_version_doc = doc_string.replace(current_version, next_version)
 
             with doc_path.open("w", encoding="utf-8") as dfp:
                 dfp.write(next_version_doc)
 
             LOG.debug(
-                f"Finished updating black version to {self.next_version} in {doc_path}"
+                f"Finished updating Black version to {next_version} in {doc_path}"
             )
+
+    def get_changelog(self) -> str:
+        with self.changes_path.open("r", encoding="utf-8") as cfp:
+            changes_string = cfp.read()
+        before_current = changes_string.split(
+            f"## Version {self.get_current_version()}"
+        )[0]
+        return before_current.split(f"## Version {self.get_next_version()}")[1].strip()
 
 
 def _handle_debug(debug: bool) -> None:
-    """Turn on debugging if asked otherwise INFO default"""
+    """Turn on debugging if asked, otherwise default to INFO"""
     log_level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(
         format="[%(asctime)s] %(levelname)s: %(message)s (%(filename)s:%(lineno)d)",
@@ -223,6 +229,23 @@ def parse_args() -> argparse.Namespace:
         help="Add the Unreleased template to CHANGES.md",
     )
     parser.add_argument(
+        "-v",
+        "--version",
+        help="Overrides the next version (for prereleases)",
+    )
+    parser.add_argument(
+        "-V",
+        "--get-version",
+        action="store_true",
+        help="Echoes the next version number and disables all other logging",
+    )
+    parser.add_argument(
+        "-C",
+        "--get-changelog",
+        action="store_true",
+        help="Echoes the version's changelog and disables all other logging",
+    )
+    parser.add_argument(
         "-d", "--debug", action="store_true", help="Verbose debug output"
     )
     args = parser.parse_args()
@@ -232,16 +255,29 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    if (args.get_version or args.get_changelog) and not args.debug:
+        logging.disable()
 
     # Need parent.parent cause script is in scripts/ directory
-    sf = SourceFiles(Path(__file__).parent.parent)
+    sf = SourceFiles(Path(__file__).parent.parent, args.version)
 
     if args.add_changes_template:
         return sf.add_template_to_changes()
 
-    LOG.info(f"Current version detected to be {sf.current_version}")
-    LOG.info(f"Next version will be {sf.next_version}")
-    return sf.update_repo_for_release()
+    next_version = sf.get_next_version()
+    LOG.info(f"Current version detected to be {sf.get_current_version()}")
+    LOG.info(f"Next version will be {next_version}")
+
+    exit_code = sf.update_repo_for_release()
+    if exit_code != 0:
+        return exit_code
+
+    if args.get_version:
+        print(next_version)
+    if args.get_changelog:
+        print(sf.get_changelog())
+
+    return exit_code
 
 
 if __name__ == "__main__":  # pragma: no cover
