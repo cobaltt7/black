@@ -47,7 +47,7 @@ jobs:
       - name: Create draft release
         if: github.event_name == 'workflow_dispatch'
         run: |
-          gh release create "$VERSION" -d -t "$VERSION" \
+          gh release create "$VERSION" -d -t "$VERSION" -n "" \
           ${{ case(inputs.Prerelease_Version == '', '', '-p') }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
