@@ -14,7 +14,7 @@ env:
 
 jobs:
   build:
-    if: github.repository == 'cobaltt7/black'
+    if: github.repository == 'psf/black'
     runs-on: ${{ matrix.runner }}
     name: build (${{ matrix.platform }})
     strategy:
