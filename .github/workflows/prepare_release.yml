@@ -90,6 +90,11 @@ jobs:
           echo "\`\`\`" >> description.md
           echo "" >> description.md
           echo "</details>" >> description.md
+        env:
+          BRANCH: |-
+            ${{ needs.create.outputs.version
+            && format('ci/prepare-release/{0}', needs.create.outputs.version)
+            || github.ref_name }}
 
       - name: Edit release PR
         run: |

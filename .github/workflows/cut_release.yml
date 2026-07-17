@@ -41,7 +41,7 @@ jobs:
             echo "version=$(python scripts/release.py prerelease $version)" >> "$GITHUB_OUTPUT"
           fi
         env:
-          HEAD: ${{ github.head_ref }}
+          HEAD: ${{ github.head_ref || github.ref_name }}
           REF: ${{ github.ref }}
 
       - name: Delete previous release if exists
