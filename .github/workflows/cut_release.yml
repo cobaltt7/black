@@ -28,7 +28,7 @@ jobs:
         with:
           python-version: "3.14"
           pip-version: "25.3"
-          pip-install: --groups release
+          pip-install: --group release
 
       - name: Get version
         id: version
@@ -177,7 +177,7 @@ jobs:
         with:
           python-version: "3.14"
           pip-version: "25.3"
-          pip-install: --groups release
+          pip-install: --group release
 
       - name: Add new changelog
         run: python scripts/release.py add

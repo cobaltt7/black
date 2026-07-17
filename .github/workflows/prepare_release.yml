@@ -30,7 +30,7 @@ jobs:
         with:
           python-version: "3.14"
           pip-version: "25.3"
-          pip-install: --groups release
+          pip-install: --group release
 
       - name: Prepare repo
         run: python scripts/release.py prepare "$VERSION"

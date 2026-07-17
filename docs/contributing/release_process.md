@@ -43,7 +43,8 @@ To cut a release:
    changes.
    - For stable versions, the workflow will automatically determine the next version
      number. Leave the `Version_Override` input empty.
-     - _Black_ follows the [CalVer] versioning standard using the `YY.M.N` format.
+     - For reference, _Black_ follows the [CalVer] versioning standard using the
+       `YY.M.N` format.
      - Unless there already has been a release during the month, `N` should be `0`.
      - Example: the first release in January 2026 is `26.1.0`.
    - If you're releasing a prerelease, specify **the expected stable release version**
