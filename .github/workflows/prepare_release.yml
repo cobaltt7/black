@@ -6,7 +6,7 @@ on:
       Version_Override:
         type: string
   push:
-    branches: ci/prepare-release
+    branches: ci/prepare-release/*
 
 permissions: {}
 
@@ -17,6 +17,8 @@ jobs:
     permissions:
       contents: write # Needed to push to new branch
       pull-requests: write # Needed to create PR
+    outputs:
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       - name: Checkout
@@ -48,11 +50,9 @@ jobs:
       - name: Commit changes
         uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7.1.0
         with:
-          commit_message:
-            ${{ format('Prepare release {0}', steps.version.outputs.version) }}
-          branch: ci/prepare-release
+          commit_message: "Prepare release ${{ steps.version.outputs.version }}"
+          branch: "ci/prepare-release/${{ steps.version.outputs.version }}"
           create_branch: true
-          push_options: --force
 
       - name: Create release PR
         run: |
@@ -86,7 +86,7 @@ jobs:
           echo "<details><summary>Changelog Diff</summary>" >> description.md
           echo "" >> description.md
           echo "\`\`\`diff" >> description.md
-          git diff origin/stable CHANGES.md >> description.md
+          git diff origin/stable "origin/$BRANCH" -- CHANGES.md >> description.md
           echo "\`\`\`" >> description.md
           echo "" >> description.md
           echo "</details>" >> description.md
@@ -96,4 +96,7 @@ jobs:
           gh pr edit "$BRANCH" -F description.md
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          BRANCH: ci/prepare-release
+          BRANCH: |-
+            ${{ needs.create.outputs.version
+            && format('ci/prepare-release/{0}', needs.create.outputs.version)
+            || github.ref_name }}

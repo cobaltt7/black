@@ -12,7 +12,8 @@ jobs:
   release:
     if:
       github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged &&
-      github.event.pull_request.head.ref == 'ci/prepare-release')
+      github.event.pull_request.head.repo.full_name == 'psf/black' &&
+      startsWith(github.head_ref, 'ci/prepare-release/'))
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -33,13 +34,14 @@ jobs:
       - name: Get version
         id: version
         run: |
-          version=$(grep -m 1 -Po "(?<=^## Version ).+$" CHANGES.md)
+          version=$(echo "$HEAD" | cut -d'/' -f3)
           if [ "$REF" == "refs/heads/main" ]; then
             echo "version=$version" >> "$GITHUB_OUTPUT"
           else
             echo "version=$(python scripts/release.py prerelease $version)" >> "$GITHUB_OUTPUT"
           fi
         env:
+          HEAD: ${{ github.head_ref }}
           REF: ${{ github.ref }}
 
       - name: Delete previous release if exists
@@ -188,7 +190,6 @@ jobs:
           commit_message: Add new changelog
           branch: ci/new-changelog
           create_branch: true
-          push_options: --force
 
       - name: Create PR
         run: |
