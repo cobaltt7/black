@@ -195,7 +195,7 @@ jobs:
           gh pr create \
             -t "Add new changelog" -b "" \
             -l "ci: skip news" -l "C: maintenance" \
-            -a $USER
+            -a "$USER"
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
           USER: ${{ github.triggering_actor }}

@@ -57,7 +57,7 @@ jobs:
       - name: Create release PR
         run: |
           gh pr create \
-            -t "Prepare release $VERSION" \
+            -t "Prepare release $VERSION" -b "" \
             -l "ci: skip news" -l "C: maintenance" \
             -a "$USER"
         env:
