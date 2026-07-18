@@ -12,7 +12,7 @@ jobs:
   release:
     if:
       github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged &&
-      github.event.pull_request.head.repo.full_name == 'psf/black' &&
+      github.event.pull_request.head.repo.full_name == 'cobaltt7/black' &&
       startsWith(github.head_ref, 'ci/prepare-release/'))
     runs-on: ubuntu-latest
     outputs:
