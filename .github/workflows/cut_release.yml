@@ -110,7 +110,10 @@ jobs:
 
       - name: Set Git tag
         shell: bash
-        run: git tag "$VERSION" -m "$VERSION"
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$VERSION" -m "$VERSION"
         env:
           VERSION: ${{ needs.release.outputs.version }}
 
