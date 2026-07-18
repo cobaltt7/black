@@ -145,7 +145,7 @@ class SourceFiles:
             return f"{base_calver}0"
         return f"{base_calver}{Version(current_version).micro + 1}"
 
-    def generate_prerelease_version(self) -> str:
+    def get_prerelease_version(self) -> str:
         parts = self.get_next_version().split(".", maxsplit=2)
         base = f"{parts[0]}.{parts[1]}a"
         LOG.debug(f"Base version: {base}")
@@ -316,7 +316,7 @@ def main() -> int:
         case "add":
             return sf.add_template_to_changes()
         case "prerelease":
-            print(sf.generate_prerelease_version())
+            print(sf.get_prerelease_version())
             return 0
         case "version":
             print(sf.get_next_version())
