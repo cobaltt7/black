@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: main
     types: closed
+    paths: docs/integrations/source_version_control.md
   workflow_dispatch:
 
 permissions: {}
@@ -64,8 +65,52 @@ jobs:
           REF: ${{ github.ref }}
           VERSION: ${{ steps.version.outputs.version }}
 
+  new-changelog:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: release
+    permissions:
+      contents: write # Needed to push to new branch
+      pull-requests: write # Needed to create PR
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true # Needed for git-auto-commit-action
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.14"
+          pip-version: "25.3"
+          pip-install: --group release
+
+      - name: Add new changelog
+        run: python scripts/release.py add
+
+      - name: Commit new changelog
+        uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7.1.0
+        with:
+          commit_message: Add new changelog
+          branch: ci/new-changelog
+          create_branch: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+
+      - name: Create PR
+        run: |
+          gh pr create \
+            -t "Add new changelog" -b "" \
+            -l "ci: skip news" -l "C: maintenance" \
+            -a "$USER"
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+          USER: ${{ github.triggering_actor }}
+
   binaries:
-    name: build binaries (${{ matrix.os }})
+    name: build-binaries (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     needs: release
     strategy:
@@ -144,11 +189,9 @@ jobs:
       contents: write # Needed to publish release & push to stable
 
     steps:
-      # Publish just needs the repo checked out. Checkout stable now to avoid an extra step later
-      - name: Checkout stable branch
+      - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: stable
           fetch-depth: 0
           persist-credentials: true # needed for `git push` below
 
@@ -163,51 +206,9 @@ jobs:
       - name: Update stable branch to release tag & push
         if: github.ref == 'refs/heads/main'
         run: |
+          git checkout stable
+          git fetch
           git reset --hard "$VERSION"
           git push
         env:
           VERSION: ${{ needs.release.outputs.version }}
-
-  new-changelog:
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    needs: release
-    permissions:
-      contents: write # Needed to push to new branch
-      pull-requests: write # Needed to create PR
-    steps:
-      - name: Checkout main branch
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          ref: main
-          fetch-depth: 0
-          persist-credentials: true # Needed for git-auto-commit-action
-
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: "3.14"
-          pip-version: "25.3"
-          pip-install: --group release
-
-      - name: Add new changelog
-        run: python scripts/release.py add
-
-      - name: Commit new changelog
-        uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7.1.0
-        with:
-          commit_message: Add new changelog
-          branch: ci/new-changelog
-          create_branch: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
-
-      - name: Create PR
-        run: |
-          gh pr create \
-            -t "Add new changelog" -b "" \
-            -l "ci: skip news" -l "C: maintenance" \
-            -a "$USER"
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
-          USER: ${{ github.triggering_actor }}
