@@ -108,24 +108,31 @@ jobs:
           pip-version: "25.3"
           pip-install: .[colorama] --group pyinstaller
 
+      - name: Set Git tag
+        shell: bash
+        run: git tag "$VERSION"
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+
       - name: Build executable with PyInstaller
+        shell: bash
         run:
           python -m PyInstaller --add-data 'src/blib2to3${{ matrix.pathsep }}blib2to3'
           -F ${{ matrix.strip && '--strip' || '' }} --name ${{ matrix.asset_name }}
           src/black/__main__.py
-        env:
-          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ needs.release.outputs.version }}
 
       - name: Quickly test executable
+        shell: bash
         run: |
+          ./dist/${{ matrix.asset_name }} --version
           ./dist/${{ matrix.asset_name }} --version | grep " $VERSION " || exit 1
           ./dist/${{ matrix.asset_name }} src --check --verbose
         env:
           VERSION: ${{ needs.release.outputs.version }}
 
       - name: Upload assets
-        run: gh release upload "$VERSION" dist/${{ matrix.asset_name }} --clobber
         shell: bash
+        run: gh release upload "$VERSION" dist/${{ matrix.asset_name }} --clobber
         env:
           GITHUB_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.release.outputs.version }}
