@@ -16,6 +16,7 @@ on:
       - tests/**
       - tox.ini
       - pyproject.toml
+      - docs/integrations/source_version_control.md # Run on "Prepare Release" PRs
 
 permissions:
   contents: read
