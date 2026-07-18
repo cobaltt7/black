@@ -110,7 +110,7 @@ jobs:
 
       - name: Set Git tag
         shell: bash
-        run: git tag "$VERSION"
+        run: git tag "$VERSION" -m "$VERSION"
         env:
           VERSION: ${{ needs.release.outputs.version }}
 
