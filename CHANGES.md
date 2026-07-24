@@ -78,6 +78,7 @@
 - Reject non-string `include` and `force-exclude` values in `pyproject.toml` (#5193)
 - Validate `BLACK_NUM_WORKERS` values and report invalid values as usage errors instead
   of crashing (#5211)
+- Ignore permission errors when reading cache (#5258)
 
 ### Packaging
 
