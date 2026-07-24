@@ -181,7 +181,7 @@ skip = [
 
 test-groups = ["tests"]
 test-command = 'pytest {project} -k "not incompatible_with_mypyc" -n auto'
-test-extras = ["d", " jupyter"]
+test-extras = ["d", "jupyter"]
 # Skip trying to test arm64 builds on Intel Macs. (so cross-compilation doesn't
 # straight up crash)
 test-skip = ["*-macosx_arm64", "*-macosx_universal2:arm64"]
