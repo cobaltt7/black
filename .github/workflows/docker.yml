@@ -11,11 +11,11 @@ permissions:
 
 env:
   PIP_UPLOADED_PRIOR_TO: P2D
-  REGISTRY: pyfound/black
+  REGISTRY: cobaltt7/test
 
 jobs:
   build:
-    if: github.repository == 'psf/black'
+    if: github.repository == 'cobaltt7/black'
     runs-on: ${{ matrix.os }}
     name: build (${{ matrix.platform }})
     strategy:
